@@ -1,0 +1,31 @@
+# Railway Sleeper Crack Detection — dependency manifest
+# Install with: pip install -r requirements.txt
+#
+# Core ML
+torch>=2.1.0
+torchvision>=0.16.0
+
+# YOLOv8 OBB detector (ultralytics v8.x required for OBB task support)
+ultralytics>=8.0.200
+
+# Computer vision
+opencv-python>=4.8.0
+
+# Data / config
+numpy>=1.24.0
+pyyaml>=6.0
+scipy>=1.11.0
+
+# Visualisation & progress
+matplotlib>=3.7.0
+tqdm>=4.65.0
+Pillow>=10.0.0
+
+# Experiment tracking (optional but recommended)
+wandb>=0.16.0
+
+# Roboflow dataset download (optional — only needed for fresh dataset pull)
+roboflow>=1.1.0
+
+# Testing
+pytest>=7.4.0
