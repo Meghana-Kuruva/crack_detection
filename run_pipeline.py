@@ -146,6 +146,10 @@ def parse_args():
                    help='Phase 1 hard-negative mining rounds')
     p.add_argument('--mining-epochs', type=int, default=50,
                    help='Fine-tune epochs per mining round')
+    p.add_argument('--p1-lr0', type=float, default=0.01,
+                   help='Phase 1 initial learning rate (lower for small datasets, e.g. 0.001)')
+    p.add_argument('--p1-no-amp', action='store_true',
+                   help='Disable AMP (mixed precision) for Phase 1 — fixes NaN loss on small/rotated-box datasets')
 
     # ── Phase 2 hyperparameters ───────────────────────────────────────────────
     p.add_argument('--p2-epochs', type=int, default=80,
@@ -235,42 +239,58 @@ def check_environment(args, log: logging.Logger):
         )
 
     # Data YAML
-    if not Path(args.data_yaml).exists():
-        raise FileNotFoundError(
-            f'data.yaml not found: {args.data_yaml}\n'
-            f'Download your Roboflow dataset and pass the correct path.'
-        )
-
     import yaml
+
     with open(args.data_yaml) as f:
         cfg = yaml.safe_load(f)
-    nc    = cfg.get('nc', '?')
-    names = cfg.get('names', {})
-    train = cfg.get('train', '')
-    val   = cfg.get('val', '')
+
+    # Resolve dataset root from data.yaml
+    dataset_root = Path(cfg.get("path", "")).expanduser().resolve()
+
+    nc = cfg.get("nc", "?")
+    names = cfg.get("names", {})
+
+    train = dataset_root / cfg.get("train", "")
+    val = dataset_root / cfg.get("val", "")
+
     log.info(f'  Dataset: nc={nc}, classes={list(names.values())}')
     log.info(f'  Train images: {train}')
     log.info(f'  Val images:   {val}')
 
-    if not Path(train).exists():
+    if not train.exists():
         raise FileNotFoundError(f'Training image directory not found: {train}')
-    if not Path(val).exists():
+
+    if not val.exists():
         raise FileNotFoundError(f'Validation image directory not found: {val}')
 
-    n_train = len(list(Path(train).glob('*.jpg')) + list(Path(train).glob('*.png')))
-    n_val   = len(list(Path(val).glob('*.jpg')) + list(Path(val).glob('*.png')))
+    n_train = len(list(train.glob("*.jpg")) + list(train.glob("*.png")))
+    n_val = len(list(val.glob("*.jpg")) + list(val.glob("*.png")))
+
     log.info(f'  Images found: {n_train} train, {n_val} val')
 
+    # IMPORTANT: rewrite cfg['train'] / cfg['val'] to fully-resolved absolute
+    # paths before returning. Every downstream function (run_sanity_tests,
+    # run_integration_tests, run_phase1, etc.) does Path(cfg['train']) and
+    # assumes it's already a complete, usable path. If we don't do this here,
+    # those functions will silently resolve relative to the *current working
+    # directory* instead of the data.yaml's "path:" root, and will fail with
+    # confusing "no images found" errors if you don't run from that exact dir.
+    cfg['train'] = str(train)
+    cfg['val'] = str(val)
+
     # Disk space (need at least 10 GB for checkpoints)
-    total, used, free = shutil.disk_usage(args.output_dir
-                                          if Path(args.output_dir).exists()
-                                          else '/')
+    total, used, free = shutil.disk_usage(
+        args.output_dir if Path(args.output_dir).exists() else '/'
+    )
+
     log.info(f'  Free disk: {free / 1024**3:.1f} GB')
+
     if free < 10 * 1024**3:
         log.warning('  Less than 10 GB free disk — checkpoints may fail to save.')
 
     log.info('─' * 60)
     return cfg
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -498,6 +518,10 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
 
     if not initial_best.exists():
         log.info(f'Training Phase 1 baseline from {weights} ...')
+        log.info(f'  lr0 = {args.p1_lr0}  amp = {not args.p1_no_amp}')
+        if args.p1_no_amp:
+            log.info('  AMP disabled — trades some speed for numerical stability '
+                     '(recommended for small/rotated-box datasets prone to NaN loss).')
         model = YOLO(weights)
         model.train(
             data      = args.data_yaml,
@@ -506,6 +530,8 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
             batch     = args.p1_batch,
             device    = args.device,
             optimizer = 'AdamW',
+            lr0       = args.p1_lr0,
+            amp       = not args.p1_no_amp,
             augment   = True,
             mosaic    = 1.0,
             patience  = 20,
@@ -527,12 +553,12 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
         return current_best
 
     log.info(f'Starting {args.mining_rounds} rounds of hard-negative mining ...')
-    import yaml
-    with open(args.data_yaml) as f:
-        data_cfg = yaml.safe_load(f)
 
-    train_img_dir = Path(data_cfg['train'])
-    val_img_dir   = Path(data_cfg.get('val', ''))
+    # Use the already-resolved absolute paths from cfg rather than re-reading
+    # and re-resolving the yaml here, so mining sees the exact same images
+    # that sanity tests / phase1 training validated against.
+    train_img_dir = Path(cfg['train'])
+    val_img_dir   = Path(cfg.get('val', ''))
 
     # Use validation images as held-out set for mining
     # (they are NOT in the training distribution — ideal for FP mining)
@@ -868,7 +894,12 @@ def run_benchmark_eval(
     with open(args.data_yaml) as f:
         full_cfg = yaml.safe_load(f)
 
-    test_dir = Path(full_cfg.get('test', full_cfg.get('val', '')))
+    # Resolve test/val dir the same way check_environment does, so eval
+    # doesn't depend on the process's current working directory.
+    dataset_root = Path(full_cfg.get('path', '')).expanduser().resolve()
+    test_rel = full_cfg.get('test', full_cfg.get('val', ''))
+    test_dir = dataset_root / test_rel if test_rel else dataset_root
+
     test_imgs = sorted(
         list(test_dir.glob('*.jpg')) + list(test_dir.glob('*.png'))
     )

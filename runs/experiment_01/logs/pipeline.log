@@ -1,0 +1,165 @@
+2026-07-02 01:50:34,426 | INFO     | Log file: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01/logs/pipeline.log
+2026-07-02 01:50:34,426 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:34,426 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 01:50:34,426 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01
+2026-07-02 01:50:34,426 | INFO     | Device:     0
+2026-07-02 01:50:34,426 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 01:50:34,426 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:34,427 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:50:34,427 | INFO     | ENVIRONMENT CHECK
+2026-07-02 01:50:34,427 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:50:34,468 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 01:50:34,494 | INFO     |   ✓  ultralytics
+2026-07-02 01:50:34,494 | INFO     |   ✓  cv2
+2026-07-02 01:50:34,494 | INFO     |   ✓  numpy
+2026-07-02 01:50:34,494 | INFO     |   ✓  yaml
+2026-07-02 01:50:34,495 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 01:50:34,495 | INFO     |   Train images: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/train/images
+2026-07-02 01:50:34,495 | INFO     |   Val images:   /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/valid/images
+2026-07-02 01:50:34,495 | INFO     |   Images found: 119 train, 15 val
+2026-07-02 01:50:34,496 | INFO     |   Free disk: 1.4 GB
+2026-07-02 01:50:34,496 | WARNING  |   Less than 10 GB free disk — checkpoints may fail to save.
+2026-07-02 01:50:34,496 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:50:34,496 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:34,496 | INFO     | SANITY TESTS (10-image subset)
+2026-07-02 01:50:34,496 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:34,496 | INFO     | [Sanity 1] Phase 1 imports ...
+2026-07-02 01:50:34,497 | INFO     |   ✓  All Phase 1 imports OK
+2026-07-02 01:50:34,497 | INFO     | [Sanity 2] Classical sleeper segmenter ...
+2026-07-02 01:50:34,682 | INFO     |   ✓  Segmenter OK on 3 images
+2026-07-02 01:50:34,682 | INFO     | [Sanity 3] ROI SAHI slicer ...
+2026-07-02 01:50:34,751 | INFO     |   ✓  15 tiles from IM03F3-1_JPG.rf.5e1bf2a02b91e23fee51d406a71bd5ef.jpg
+2026-07-02 01:50:34,751 | INFO     | [Sanity 4] Phase 1 pipeline end-to-end ...
+2026-07-02 01:50:36,757 | INFO     |   ✓  Phase 1 pipeline: 0 detections, FP rate=0/0
+2026-07-02 01:50:36,757 | INFO     | [Sanity 5] Phase 2 imports ...
+2026-07-02 01:50:36,758 | INFO     |   ✓  All Phase 2 imports OK
+2026-07-02 01:50:36,758 | INFO     | [Sanity 6] Phase 2 loss forward pass ...
+2026-07-02 01:50:36,758 | INFO     |   ✓  Phase 2 loss OK: total=0.8000
+2026-07-02 01:50:36,758 | INFO     | [Sanity 7] Pseudo-label generation ...
+2026-07-02 01:50:36,818 | INFO     |   ✓  Pseudo-label generation OK
+2026-07-02 01:50:36,818 | INFO     | [Sanity 8] Phase 3 imports ...
+2026-07-02 01:50:36,820 | INFO     |   ✓  All Phase 3 imports OK
+2026-07-02 01:50:36,820 | INFO     | [Sanity 9] Phase 3 model forward pass ...
+2026-07-02 01:50:37,125 | INFO     |   ✓  Phase 3 model OK: 4 detection levels, aux=['crack_seg', 'sleeper_seg', 'type_cls']
+2026-07-02 01:50:37,126 | INFO     | [Sanity 10] Integration: Phase 1 → Phase 2 weight loading ...
+2026-07-02 01:50:37,195 | WARNING  |   ⚠  Phase 2 load error (non-fatal): 'MultiTaskModel' object has no attribute '_features'
+2026-07-02 01:50:37,195 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:37,196 | INFO     | ALL SANITY TESTS PASSED
+2026-07-02 01:50:37,196 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:37,196 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:37,196 | INFO     | PHASE 1: Baseline Training + Hard-Negative Mining
+2026-07-02 01:50:37,196 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:50:37,196 | INFO     | Training Phase 1 baseline from yolov8s-obb.pt ...
+2026-07-02 01:50:37,196 | INFO     |   lr0 = 0.001  amp = False
+2026-07-02 01:50:37,196 | INFO     |   AMP disabled — trades some speed for numerical stability (recommended for small/rotated-box datasets prone to NaN loss).
+2026-07-02 01:52:50,939 | INFO     | Log file: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01/logs/pipeline.log
+2026-07-02 01:52:50,939 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:50,939 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 01:52:50,939 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01
+2026-07-02 01:52:50,939 | INFO     | Device:     0
+2026-07-02 01:52:50,939 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 01:52:50,939 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:50,939 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:52:50,939 | INFO     | ENVIRONMENT CHECK
+2026-07-02 01:52:50,939 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:52:50,983 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 01:52:51,010 | INFO     |   ✓  ultralytics
+2026-07-02 01:52:51,010 | INFO     |   ✓  cv2
+2026-07-02 01:52:51,010 | INFO     |   ✓  numpy
+2026-07-02 01:52:51,010 | INFO     |   ✓  yaml
+2026-07-02 01:52:51,010 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 01:52:51,010 | INFO     |   Train images: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/train/images
+2026-07-02 01:52:51,010 | INFO     |   Val images:   /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/valid/images
+2026-07-02 01:52:51,011 | INFO     |   Images found: 119 train, 15 val
+2026-07-02 01:52:51,011 | INFO     |   Free disk: 1.4 GB
+2026-07-02 01:52:51,011 | WARNING  |   Less than 10 GB free disk — checkpoints may fail to save.
+2026-07-02 01:52:51,011 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:52:51,011 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:51,011 | INFO     | SANITY TESTS (10-image subset)
+2026-07-02 01:52:51,011 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:51,011 | INFO     | [Sanity 1] Phase 1 imports ...
+2026-07-02 01:52:51,012 | INFO     |   ✓  All Phase 1 imports OK
+2026-07-02 01:52:51,012 | INFO     | [Sanity 2] Classical sleeper segmenter ...
+2026-07-02 01:52:51,198 | INFO     |   ✓  Segmenter OK on 3 images
+2026-07-02 01:52:51,198 | INFO     | [Sanity 3] ROI SAHI slicer ...
+2026-07-02 01:52:51,264 | INFO     |   ✓  15 tiles from IM03F3-1_JPG.rf.5e1bf2a02b91e23fee51d406a71bd5ef.jpg
+2026-07-02 01:52:51,264 | INFO     | [Sanity 4] Phase 1 pipeline end-to-end ...
+2026-07-02 01:52:53,219 | INFO     |   ✓  Phase 1 pipeline: 0 detections, FP rate=0/0
+2026-07-02 01:52:53,219 | INFO     | [Sanity 5] Phase 2 imports ...
+2026-07-02 01:52:53,220 | INFO     |   ✓  All Phase 2 imports OK
+2026-07-02 01:52:53,221 | INFO     | [Sanity 6] Phase 2 loss forward pass ...
+2026-07-02 01:52:53,221 | INFO     |   ✓  Phase 2 loss OK: total=0.8000
+2026-07-02 01:52:53,221 | INFO     | [Sanity 7] Pseudo-label generation ...
+2026-07-02 01:52:53,280 | INFO     |   ✓  Pseudo-label generation OK
+2026-07-02 01:52:53,280 | INFO     | [Sanity 8] Phase 3 imports ...
+2026-07-02 01:52:53,281 | INFO     |   ✓  All Phase 3 imports OK
+2026-07-02 01:52:53,281 | INFO     | [Sanity 9] Phase 3 model forward pass ...
+2026-07-02 01:52:53,614 | INFO     |   ✓  Phase 3 model OK: 4 detection levels, aux=['crack_seg', 'sleeper_seg', 'type_cls']
+2026-07-02 01:52:53,615 | INFO     | [Sanity 10] Integration: Phase 1 → Phase 2 weight loading ...
+2026-07-02 01:52:53,688 | WARNING  |   ⚠  Phase 2 load error (non-fatal): 'MultiTaskModel' object has no attribute '_features'
+2026-07-02 01:52:53,688 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:53,688 | INFO     | ALL SANITY TESTS PASSED
+2026-07-02 01:52:53,688 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:53,689 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:53,689 | INFO     | PHASE 1: Baseline Training + Hard-Negative Mining
+2026-07-02 01:52:53,689 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:52:53,689 | INFO     | Training Phase 1 baseline from yolov8s-obb.pt ...
+2026-07-02 01:52:53,689 | INFO     |   lr0 = 0.001  amp = False
+2026-07-02 01:52:53,689 | INFO     |   AMP disabled — trades some speed for numerical stability (recommended for small/rotated-box datasets prone to NaN loss).
+2026-07-02 02:00:32,983 | INFO     | Log file: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01/logs/pipeline.log
+2026-07-02 02:00:32,983 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:32,983 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 02:00:32,983 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01
+2026-07-02 02:00:32,983 | INFO     | Device:     0
+2026-07-02 02:00:32,983 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 02:00:32,983 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:32,983 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 02:00:32,983 | INFO     | ENVIRONMENT CHECK
+2026-07-02 02:00:32,983 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 02:00:33,022 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 02:00:33,049 | INFO     |   ✓  ultralytics
+2026-07-02 02:00:33,049 | INFO     |   ✓  cv2
+2026-07-02 02:00:33,049 | INFO     |   ✓  numpy
+2026-07-02 02:00:33,049 | INFO     |   ✓  yaml
+2026-07-02 02:00:33,049 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 02:00:33,049 | INFO     |   Train images: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/train/images
+2026-07-02 02:00:33,049 | INFO     |   Val images:   /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/valid/images
+2026-07-02 02:00:33,050 | INFO     |   Images found: 119 train, 15 val
+2026-07-02 02:00:33,050 | INFO     |   Free disk: 1.4 GB
+2026-07-02 02:00:33,050 | WARNING  |   Less than 10 GB free disk — checkpoints may fail to save.
+2026-07-02 02:00:33,050 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 02:00:33,050 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:33,050 | INFO     | SANITY TESTS (10-image subset)
+2026-07-02 02:00:33,050 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:33,050 | INFO     | [Sanity 1] Phase 1 imports ...
+2026-07-02 02:00:33,051 | INFO     |   ✓  All Phase 1 imports OK
+2026-07-02 02:00:33,051 | INFO     | [Sanity 2] Classical sleeper segmenter ...
+2026-07-02 02:00:33,236 | INFO     |   ✓  Segmenter OK on 3 images
+2026-07-02 02:00:33,236 | INFO     | [Sanity 3] ROI SAHI slicer ...
+2026-07-02 02:00:33,301 | INFO     |   ✓  15 tiles from IM03F3-1_JPG.rf.5e1bf2a02b91e23fee51d406a71bd5ef.jpg
+2026-07-02 02:00:33,301 | INFO     | [Sanity 4] Phase 1 pipeline end-to-end ...
+2026-07-02 02:00:35,349 | INFO     |   ✓  Phase 1 pipeline: 0 detections, FP rate=0/0
+2026-07-02 02:00:35,349 | INFO     | [Sanity 5] Phase 2 imports ...
+2026-07-02 02:00:35,351 | INFO     |   ✓  All Phase 2 imports OK
+2026-07-02 02:00:35,351 | INFO     | [Sanity 6] Phase 2 loss forward pass ...
+2026-07-02 02:00:35,351 | INFO     |   ✓  Phase 2 loss OK: total=0.8000
+2026-07-02 02:00:35,351 | INFO     | [Sanity 7] Pseudo-label generation ...
+2026-07-02 02:00:35,410 | INFO     |   ✓  Pseudo-label generation OK
+2026-07-02 02:00:35,410 | INFO     | [Sanity 8] Phase 3 imports ...
+2026-07-02 02:00:35,412 | INFO     |   ✓  All Phase 3 imports OK
+2026-07-02 02:00:35,412 | INFO     | [Sanity 9] Phase 3 model forward pass ...
+2026-07-02 02:00:35,740 | INFO     |   ✓  Phase 3 model OK: 4 detection levels, aux=['crack_seg', 'sleeper_seg', 'type_cls']
+2026-07-02 02:00:35,740 | INFO     | [Sanity 10] Integration: Phase 1 → Phase 2 weight loading ...
+2026-07-02 02:00:35,802 | WARNING  |   ⚠  Phase 2 load error (non-fatal): 'MultiTaskModel' object has no attribute '_features'
+2026-07-02 02:00:35,802 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:35,802 | INFO     | ALL SANITY TESTS PASSED
+2026-07-02 02:00:35,802 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:35,803 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:35,803 | INFO     | PHASE 1: Baseline Training + Hard-Negative Mining
+2026-07-02 02:00:35,803 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 02:00:35,803 | INFO     | Training Phase 1 baseline from yolov8s-obb.pt ...
+2026-07-02 02:00:35,803 | INFO     |   lr0 = 0.001  amp = False
+2026-07-02 02:00:35,803 | INFO     |   AMP disabled — trades some speed for numerical stability (recommended for small/rotated-box datasets prone to NaN loss).
+2026-07-02 02:04:27,234 | INFO     | Phase 1 baseline complete → /home/rilgpu/Documents/Meghana/crack_detection/runs/experiment_01/phase1/baseline/weights/best.pt
+2026-07-02 02:04:27,234 | INFO     | Hard-negative mining skipped (--skip-mining).
+2026-07-02 02:04:27,235 | INFO     | Phase 1 wall time: 3.9 min

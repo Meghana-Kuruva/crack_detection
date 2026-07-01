@@ -1,0 +1,159 @@
+2026-07-02 00:32:16,298 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 00:32:16,298 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:32:16,298 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 00:32:16,298 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 00:32:16,298 | INFO     | Device:     0
+2026-07-02 00:32:16,299 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 00:32:16,299 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:32:16,299 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:32:16,299 | INFO     | ENVIRONMENT CHECK
+2026-07-02 00:32:16,299 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:32:16,340 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 00:32:16,470 | INFO     |   ✓  ultralytics
+2026-07-02 00:32:16,470 | INFO     |   ✓  cv2
+2026-07-02 00:32:16,470 | INFO     |   ✓  numpy
+2026-07-02 00:32:16,470 | INFO     |   ✓  yaml
+2026-07-02 00:35:09,968 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 00:35:09,968 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:35:09,968 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 00:35:09,968 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 00:35:09,968 | INFO     | Device:     0
+2026-07-02 00:35:09,968 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 00:35:09,968 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:35:09,968 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:35:09,968 | INFO     | ENVIRONMENT CHECK
+2026-07-02 00:35:09,968 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:35:10,011 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 00:35:10,037 | INFO     |   ✓  ultralytics
+2026-07-02 00:35:10,037 | INFO     |   ✓  cv2
+2026-07-02 00:35:10,037 | INFO     |   ✓  numpy
+2026-07-02 00:35:10,037 | INFO     |   ✓  yaml
+2026-07-02 00:35:10,038 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 00:35:10,038 | INFO     |   Train images: train/images
+2026-07-02 00:35:10,038 | INFO     |   Val images:   valid/images
+2026-07-02 00:36:18,590 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 00:36:18,590 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:36:18,590 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 00:36:18,590 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 00:36:18,590 | INFO     | Device:     0
+2026-07-02 00:36:18,590 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 00:36:18,590 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:36:18,590 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:36:18,590 | INFO     | ENVIRONMENT CHECK
+2026-07-02 00:36:18,590 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:36:18,635 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 00:36:18,661 | INFO     |   ✓  ultralytics
+2026-07-02 00:36:18,661 | INFO     |   ✓  cv2
+2026-07-02 00:36:18,661 | INFO     |   ✓  numpy
+2026-07-02 00:36:18,661 | INFO     |   ✓  yaml
+2026-07-02 00:36:18,662 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 00:36:18,662 | INFO     |   Train images: train/images
+2026-07-02 00:36:18,662 | INFO     |   Val images:   valid/images
+2026-07-02 00:39:40,451 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 00:39:40,451 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:39:40,451 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 00:39:40,451 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 00:39:40,451 | INFO     | Device:     0
+2026-07-02 00:39:40,451 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 00:39:40,451 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 00:39:40,451 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:39:40,451 | INFO     | ENVIRONMENT CHECK
+2026-07-02 00:39:40,451 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 00:39:40,492 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 00:39:40,518 | INFO     |   ✓  ultralytics
+2026-07-02 00:39:40,518 | INFO     |   ✓  cv2
+2026-07-02 00:39:40,518 | INFO     |   ✓  numpy
+2026-07-02 00:39:40,518 | INFO     |   ✓  yaml
+2026-07-02 00:39:40,518 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 00:39:40,518 | INFO     |   Train images: train/images
+2026-07-02 00:39:40,518 | INFO     |   Val images:   valid/images
+2026-07-02 01:17:59,350 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 01:17:59,351 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:17:59,351 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 01:17:59,351 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 01:17:59,351 | INFO     | Device:     0
+2026-07-02 01:17:59,351 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 01:17:59,351 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:17:59,351 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:17:59,351 | INFO     | ENVIRONMENT CHECK
+2026-07-02 01:17:59,351 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:17:59,394 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 01:17:59,442 | INFO     |   ✓  ultralytics
+2026-07-02 01:17:59,442 | INFO     |   ✓  cv2
+2026-07-02 01:17:59,442 | INFO     |   ✓  numpy
+2026-07-02 01:17:59,442 | INFO     |   ✓  yaml
+2026-07-02 01:17:59,442 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 01:17:59,442 | INFO     |   Train images: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/train/images
+2026-07-02 01:17:59,443 | INFO     |   Val images:   /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/valid/images
+2026-07-02 01:17:59,443 | INFO     |   Images found: 119 train, 15 val
+2026-07-02 01:17:59,443 | INFO     |   Free disk: 1.4 GB
+2026-07-02 01:17:59,443 | WARNING  |   Less than 10 GB free disk — checkpoints may fail to save.
+2026-07-02 01:17:59,443 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:17:59,443 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:17:59,443 | INFO     | SANITY TESTS (10-image subset)
+2026-07-02 01:17:59,443 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:17:59,443 | ERROR    | No images found for sanity test — check data.yaml train path.
+2026-07-02 01:34:42,903 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 01:34:42,903 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:34:42,903 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 01:34:42,903 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 01:34:42,903 | INFO     | Device:     0
+2026-07-02 01:34:42,903 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 01:34:42,903 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:34:42,903 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:34:42,903 | INFO     | ENVIRONMENT CHECK
+2026-07-02 01:34:42,903 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:34:42,944 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 01:34:43,010 | INFO     |   ✓  ultralytics
+2026-07-02 01:34:43,010 | INFO     |   ✓  cv2
+2026-07-02 01:34:43,010 | INFO     |   ✓  numpy
+2026-07-02 01:34:43,010 | INFO     |   ✓  yaml
+2026-07-02 01:45:15,238 | INFO     | Log file: runs/pipeline/logs/pipeline.log
+2026-07-02 01:45:15,238 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:15,238 | INFO     | RAILWAY SLEEPER CRACK DETECTION — MASTER PIPELINE
+2026-07-02 01:45:15,238 | INFO     | Output dir: /home/rilgpu/Documents/Meghana/crack_detection/runs/pipeline
+2026-07-02 01:45:15,238 | INFO     | Device:     0
+2026-07-02 01:45:15,238 | INFO     | Phases:     [1, 2, 3]
+2026-07-02 01:45:15,238 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:15,238 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:45:15,238 | INFO     | ENVIRONMENT CHECK
+2026-07-02 01:45:15,238 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:45:15,279 | INFO     |   GPU 0: NVIDIA RTX A5000 (23.5 GB VRAM)
+2026-07-02 01:45:15,306 | INFO     |   ✓  ultralytics
+2026-07-02 01:45:15,306 | INFO     |   ✓  cv2
+2026-07-02 01:45:15,306 | INFO     |   ✓  numpy
+2026-07-02 01:45:15,306 | INFO     |   ✓  yaml
+2026-07-02 01:45:15,306 | INFO     |   Dataset: nc=?, classes=['cracks in midportion', 'cracks under rail seat', 'damage']
+2026-07-02 01:45:15,306 | INFO     |   Train images: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/train/images
+2026-07-02 01:45:15,306 | INFO     |   Val images:   /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6/valid/images
+2026-07-02 01:45:15,307 | INFO     |   Images found: 119 train, 15 val
+2026-07-02 01:45:15,307 | INFO     |   Free disk: 1.4 GB
+2026-07-02 01:45:15,307 | WARNING  |   Less than 10 GB free disk — checkpoints may fail to save.
+2026-07-02 01:45:15,307 | INFO     | ────────────────────────────────────────────────────────────
+2026-07-02 01:45:15,307 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:15,307 | INFO     | SANITY TESTS (10-image subset)
+2026-07-02 01:45:15,307 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:15,307 | INFO     | [Sanity 1] Phase 1 imports ...
+2026-07-02 01:45:15,310 | INFO     |   ✓  All Phase 1 imports OK
+2026-07-02 01:45:15,310 | INFO     | [Sanity 2] Classical sleeper segmenter ...
+2026-07-02 01:45:15,576 | INFO     |   ✓  Segmenter OK on 3 images
+2026-07-02 01:45:15,576 | INFO     | [Sanity 3] ROI SAHI slicer ...
+2026-07-02 01:45:15,655 | INFO     |   ✓  15 tiles from IM03F3-1_JPG.rf.5e1bf2a02b91e23fee51d406a71bd5ef.jpg
+2026-07-02 01:45:15,655 | INFO     | [Sanity 4] Phase 1 pipeline end-to-end ...
+2026-07-02 01:45:15,655 | INFO     |   –  Skipped (no YOLO weights at yolov8s-obb.pt)
+2026-07-02 01:45:15,655 | INFO     | [Sanity 5] Phase 2 imports ...
+2026-07-02 01:45:15,661 | INFO     |   ✓  All Phase 2 imports OK
+2026-07-02 01:45:15,661 | INFO     | [Sanity 6] Phase 2 loss forward pass ...
+2026-07-02 01:45:15,676 | INFO     |   ✓  Phase 2 loss OK: total=0.8000
+2026-07-02 01:45:15,677 | INFO     | [Sanity 7] Pseudo-label generation ...
+2026-07-02 01:45:15,762 | INFO     |   ✓  Pseudo-label generation OK
+2026-07-02 01:45:15,762 | INFO     | [Sanity 8] Phase 3 imports ...
+2026-07-02 01:45:15,769 | INFO     |   ✓  All Phase 3 imports OK
+2026-07-02 01:45:15,769 | INFO     | [Sanity 9] Phase 3 model forward pass ...
+2026-07-02 01:45:16,259 | INFO     |   ✓  Phase 3 model OK: 4 detection levels, aux=['crack_seg', 'sleeper_seg', 'type_cls']
+2026-07-02 01:45:16,260 | INFO     | [Sanity 10] Integration: Phase 1 → Phase 2 weight loading ...
+2026-07-02 01:45:16,260 | INFO     |   –  Skipped (no Phase 1 weights)
+2026-07-02 01:45:16,260 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:16,260 | INFO     | ALL SANITY TESTS PASSED
+2026-07-02 01:45:16,260 | INFO     | ════════════════════════════════════════════════════════════
+2026-07-02 01:45:16,261 | INFO     | --sanity-only: exiting after sanity tests.

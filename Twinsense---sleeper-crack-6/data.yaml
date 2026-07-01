@@ -1,0 +1,8 @@
+train: train/images
+val: valid/images
+test: test/images
+names:
+  0: cracks in midportion
+  1: cracks under rail seat
+  2: damage
+path: /home/rilgpu/Documents/Meghana/crack_detection/Twinsense---sleeper-crack-6
