@@ -276,12 +276,29 @@ class OBBDatasetWithPseudoLabels(torch.utils.data.Dataset):
 
         img_bgr = cv2.resize(img_bgr, self.img_size[::-1])  # cv2 takes (W,H)
 
-        # Basic augmentation (horizontal flip)
-        if self.augment and np.random.rand() > 0.5:
-            img_bgr = cv2.flip(img_bgr, 1)
-            # Note: flip OBB labels too if using them in the custom loss;
-            # here we only flip the image for the pseudo-label generation
-            # (the detection labels are handled by ultralytics' own augmentation)
+        # Augmentation: multiple transforms for the tiny 119-image dataset
+        if self.augment:
+            # Horizontal flip
+            if np.random.rand() > 0.5:
+                img_bgr = cv2.flip(img_bgr, 1)
+            # Vertical flip (cracks appear on both track orientations)
+            if np.random.rand() > 0.8:
+                img_bgr = cv2.flip(img_bgr, 0)
+            # Random 90° rotation — cracks can run in any direction
+            if np.random.rand() > 0.7:
+                k = np.random.randint(1, 4)
+                img_bgr = np.rot90(img_bgr, k).copy()
+            # HSV jitter: simulate different lighting / rust / weathering
+            if np.random.rand() > 0.5:
+                hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV).astype(np.float32)
+                hsv[..., 1] *= np.random.uniform(0.6, 1.4)   # saturation
+                hsv[..., 2] *= np.random.uniform(0.6, 1.4)   # value
+                hsv = np.clip(hsv, 0, 255).astype(np.uint8)
+                img_bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+            # Gaussian blur: simulate out-of-focus or dusty camera
+            if np.random.rand() > 0.8:
+                k = np.random.choice([3, 5])
+                img_bgr = cv2.GaussianBlur(img_bgr, (k, k), 0)
 
         # Generate pseudo-labels
         pseudo = self.gen.generate(img_bgr, str(label_path), image_size=self.img_size)

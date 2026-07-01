@@ -340,6 +340,10 @@ def run_phase3_training(
         # Switch optimiser at warmup boundary (unfreeze backbone)
         if epoch == 0 or epoch == args.warmup_epochs:
             optim = _build_optimiser(model, args, epoch=epoch)
+            # Store base LR for warmup scaling — without this the warmup formula
+            # always falls back to args.lr0 and the warmup scaling is a no-op
+            for pg in optim.param_groups:
+                pg['_base_lr'] = pg['lr']
             sched = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optim, T_max=max(args.epochs - epoch, 1), eta_min=args.lr0 * 0.01)
 
@@ -379,15 +383,12 @@ def run_phase3_training(
             epoch_loss += loss.item()
             global_step += 1
 
-            # LR warmup for first 3 epochs (linear from 0.1× to 1×)
-            # FIX: use 'initial_lr' (set by PyTorch scheduler) or fall back to
-            # the param group's configured 'lr' before any scaling was applied.
+            # LR warmup for first 3 epochs
             if epoch < 3:
                 lr_scale = min(1.0, (epoch * len(train_loader) + batch_idx + 1) /
                                (3 * len(train_loader)))
                 for pg in optim.param_groups:
-                    base = pg.get('initial_lr', pg.get('lr', args.lr0))
-                    pg['lr'] = base * max(lr_scale, 0.1)
+                    pg['lr'] = pg.get('_base_lr', args.lr0) * lr_scale
 
         sched.step()
         epoch_loss /= max(len(train_loader), 1)
@@ -428,31 +429,36 @@ def run_phase3_training(
 # VALIDATION
 # ══════════════════════════════════════════════════════════════════════════════
 
-@torch.no_grad()
 def _validate(model, val_loader, device, args: Phase3TrainArgs) -> float:
-    model.eval()
+    """
+    Compute validation loss in train mode (needed so Phase3Model.forward
+    takes the training branch and computes loss from aux_targets).
+    Gradients are disabled via torch.no_grad() to save memory.
+    """
+    was_training = model.training
+    model.train()   # training branch computes loss; eval branch returns raw preds
     total_loss = 0.0
     n = 0
 
-    for batch_data in val_loader:
-        images = batch_data['img'].to(device)
-        aux_targets = {
-            'crack_mask':   batch_data['crack_mask'].to(device),
-            'sleeper_mask': batch_data['sleeper_mask'].to(device),
-            'crack_type':   batch_data['crack_type'].to(device),
-        }
-        batch_dict = {'img': images}
+    with torch.no_grad():
+        for batch_data in val_loader:
+            images = batch_data['img'].to(device)
+            aux_targets = {
+                'crack_mask':   batch_data['crack_mask'].to(device),
+                'sleeper_mask': batch_data['sleeper_mask'].to(device),
+                'crack_type':   batch_data['crack_type'].to(device),
+            }
+            batch_dict = {'img': images}
+            try:
+                loss, _ = model(batch_dict, aux_targets=aux_targets)
+                if not (torch.isnan(loss) or torch.isinf(loss)):
+                    total_loss += loss.item()
+                    n += 1
+            except Exception:
+                pass
 
-        model.train()   # enable loss computation (needs .training=True)
-        try:
-            loss, _ = model(batch_dict, aux_targets=aux_targets)
-            total_loss += loss.item()
-            n += 1
-        except Exception:
-            pass
+    if not was_training:
         model.eval()
-
-    model.train()
     return total_loss / max(n, 1)
 
 

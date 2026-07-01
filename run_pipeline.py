@@ -136,24 +136,16 @@ def parse_args():
                    help='DataLoader worker processes')
 
     # ── Phase 1 hyperparameters ───────────────────────────────────────────────
-    p.add_argument('--p1-epochs', type=int, default=150,
+    p.add_argument('--p1-epochs', type=int, default=100,
                    help='Phase 1 initial training epochs')
-    p.add_argument('--p1-batch', type=int, default=8,
+    p.add_argument('--p1-batch', type=int, default=16,
                    help='Phase 1 training batch size')
     p.add_argument('--p1-imgsz', type=int, default=1024,
                    help='Phase 1 training image size')
-    p.add_argument('--p1-lr0', type=float, default=0.001,
-                   help='Phase 1 initial learning rate')
-    p.add_argument('--p1-no-amp', action='store_true',
-                   help='Disable AMP for Phase 1 (fixes EMA NaN on small OBB datasets)')
     p.add_argument('--mining-rounds', type=int, default=3,
                    help='Phase 1 hard-negative mining rounds')
     p.add_argument('--mining-epochs', type=int, default=50,
                    help='Fine-tune epochs per mining round')
-    p.add_argument('--p1-lr0', type=float, default=0.01,
-                   help='Phase 1 initial learning rate (lower for small datasets, e.g. 0.001)')
-    p.add_argument('--p1-no-amp', action='store_true',
-                   help='Disable AMP (mixed precision) for Phase 1 — fixes NaN loss on small/rotated-box datasets')
 
     # ── Phase 2 hyperparameters ───────────────────────────────────────────────
     p.add_argument('--p2-epochs', type=int, default=80,
@@ -243,77 +235,42 @@ def check_environment(args, log: logging.Logger):
         )
 
     # Data YAML
-    import yaml
+    if not Path(args.data_yaml).exists():
+        raise FileNotFoundError(
+            f'data.yaml not found: {args.data_yaml}\n'
+            f'Download your Roboflow dataset and pass the correct path.'
+        )
 
+    import yaml
     with open(args.data_yaml) as f:
         cfg = yaml.safe_load(f)
-<<<<<<< HEAD
+    nc    = cfg.get('nc', '?')
     names = cfg.get('names', {})
-    nc    = cfg.get('nc', None)
-
-    # Auto-patch missing nc field — Roboflow OBB exports sometimes omit it,
-    # which causes CUDA index-out-of-bounds during loss computation.
-    if nc is None:
-        nc = len(names)
-        cfg['nc'] = nc
-        with open(args.data_yaml, 'w') as f:
-            yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
-        log.info(f'  Auto-patched data.yaml: added nc={nc}')
-    else:
-        nc = int(nc)
-
     train = cfg.get('train', '')
     val   = cfg.get('val', '')
-=======
-
-    # Resolve dataset root from data.yaml
-    dataset_root = Path(cfg.get("path", "")).expanduser().resolve()
-
-    nc = cfg.get("nc", "?")
-    names = cfg.get("names", {})
-
-    train = dataset_root / cfg.get("train", "")
-    val = dataset_root / cfg.get("val", "")
-
->>>>>>> ef273997d11e5d416d9c1e2e6a650e21b3f426e1
     log.info(f'  Dataset: nc={nc}, classes={list(names.values())}')
     log.info(f'  Train images: {train}')
     log.info(f'  Val images:   {val}')
 
-    if not train.exists():
+    if not Path(train).exists():
         raise FileNotFoundError(f'Training image directory not found: {train}')
-
-    if not val.exists():
+    if not Path(val).exists():
         raise FileNotFoundError(f'Validation image directory not found: {val}')
 
-    n_train = len(list(train.glob("*.jpg")) + list(train.glob("*.png")))
-    n_val = len(list(val.glob("*.jpg")) + list(val.glob("*.png")))
-
+    n_train = len(list(Path(train).glob('*.jpg')) + list(Path(train).glob('*.png')))
+    n_val   = len(list(Path(val).glob('*.jpg')) + list(Path(val).glob('*.png')))
     log.info(f'  Images found: {n_train} train, {n_val} val')
 
-    # IMPORTANT: rewrite cfg['train'] / cfg['val'] to fully-resolved absolute
-    # paths before returning. Every downstream function (run_sanity_tests,
-    # run_integration_tests, run_phase1, etc.) does Path(cfg['train']) and
-    # assumes it's already a complete, usable path. If we don't do this here,
-    # those functions will silently resolve relative to the *current working
-    # directory* instead of the data.yaml's "path:" root, and will fail with
-    # confusing "no images found" errors if you don't run from that exact dir.
-    cfg['train'] = str(train)
-    cfg['val'] = str(val)
-
     # Disk space (need at least 10 GB for checkpoints)
-    total, used, free = shutil.disk_usage(
-        args.output_dir if Path(args.output_dir).exists() else '/'
-    )
-
+    total, used, free = shutil.disk_usage(args.output_dir
+                                          if Path(args.output_dir).exists()
+                                          else '/')
     log.info(f'  Free disk: {free / 1024**3:.1f} GB')
-
     if free < 10 * 1024**3:
         log.warning('  Less than 10 GB free disk — checkpoints may fail to save.')
 
     log.info('─' * 60)
     return cfg
-
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -537,55 +494,10 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
 
     # ── Step 1: Initial training ─────────────────────────────────────────────
     weights = args.phase1_weights
-    lr0     = getattr(args, 'p1_lr0',    0.001)
-    use_amp = not getattr(args, 'p1_no_amp', False)
-
-    # FIX: scan for any existing baseline run instead of hardcoding 'baseline/'
-    # Ultralytics auto-increments (baseline, baseline2, baseline3…) when
-    # exist_ok=False. We now pass exist_ok=True to pin to 'baseline/' always.
-    initial_best = p1_dir / 'baseline' / 'weights' / 'best.pt'
+    initial_best = p1_dir / 'weights' / 'best.pt'
 
     if not initial_best.exists():
         log.info(f'Training Phase 1 baseline from {weights} ...')
-<<<<<<< HEAD
-        log.info(f'  lr0 = {lr0}  amp = {use_amp}')
-        if not use_amp:
-            log.info('  AMP disabled — trades some speed for numerical stability '
-                     '(recommended for small/rotated-box datasets prone to NaN loss).')
-
-        model = YOLO(weights)
-        model.train(
-            data             = args.data_yaml,
-            epochs           = args.p1_epochs,
-            imgsz            = args.p1_imgsz,
-            batch            = args.p1_batch,
-            device           = args.device,
-            optimizer        = 'AdamW',
-            lr0              = lr0,
-            lrf              = 0.01,
-            warmup_epochs    = 5,
-            warmup_bias_lr   = 0.01,     # FIX: default 0.1 causes EMA NaN on small datasets
-            weight_decay     = 0.0005,
-            momentum         = 0.937,
-            augment          = True,
-            mosaic           = 1.0,
-            copy_paste       = 0.3,      # paste real cracks onto clean sleeper backgrounds
-            degrees          = 15.0,     # OBB-safe rotation augmentation
-            mixup            = 0.1,
-            close_mosaic     = 15,       # disable mosaic in final 15 epochs for clean convergence
-            patience         = 50,       # FIX: was 20 — EMA NaN was preventing "improvement"
-            amp              = use_amp,
-            exist_ok         = True,     # FIX: pins to 'baseline/' and prevents baseline-2/3/…
-            project          = str(p1_dir),
-            name             = 'baseline',
-            save             = True,
-            task             = 'obb',
-            workers          = args.workers,
-=======
-        log.info(f'  lr0 = {args.p1_lr0}  amp = {not args.p1_no_amp}')
-        if args.p1_no_amp:
-            log.info('  AMP disabled — trades some speed for numerical stability '
-                     '(recommended for small/rotated-box datasets prone to NaN loss).')
         model = YOLO(weights)
         model.train(
             data      = args.data_yaml,
@@ -593,33 +505,42 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
             imgsz     = args.p1_imgsz,
             batch     = args.p1_batch,
             device    = args.device,
-            optimizer = 'AdamW',
-            lr0       = args.p1_lr0,
-            amp       = not args.p1_no_amp,
-            augment   = True,
-            mosaic    = 1.0,
-            patience  = 20,
-            project   = str(p1_dir),
-            name      = 'baseline',
-            save      = True,
-            task      = 'obb',
->>>>>>> ef273997d11e5d416d9c1e2e6a650e21b3f426e1
+            # Optimiser — AdamW with lower lr for tiny dataset stability
+            optimizer     = 'AdamW',
+            lr0           = 0.001,
+            lrf           = 0.01,
+            weight_decay  = 1e-3,       # stronger regularisation (119 images → easy to overfit)
+            warmup_epochs = 5,
+            warmup_momentum = 0.8,
+            cos_lr        = True,       # cosine annealing beats flat LR on small data
+            # Augmentation — aggressive; each epoch must see diverse views
+            augment       = True,
+            mosaic        = 1.0,
+            close_mosaic  = 15,         # keep mosaic until last 15 epochs
+            copy_paste    = 0.3,        # paste crack crops from other images — very effective
+            degrees       = 45.0,       # critical for OBB: cracks appear at all angles
+            scale         = 0.5,        # multi-scale jitter
+            translate     = 0.1,
+            flipud        = 0.1,
+            fliplr        = 0.5,
+            hsv_h         = 0.015,
+            hsv_s         = 0.7,
+            hsv_v         = 0.4,
+            erasing       = 0.4,        # random erasing improves recall on occluded cracks
+            # Classification quality
+            label_smoothing = 0.05,     # prevents overconfidence with only 15 val images
+            # Stability
+            amp           = False,      # AMP causes NaN with OBB angle loss on small batches
+            patience      = 30,         # more patience; val noise is high with 15 val images
+            project       = str(p1_dir),
+            name          = 'baseline',
+            save          = True,
+            task          = 'obb',
         )
+        initial_best = p1_dir / 'baseline' / 'weights' / 'best.pt'
         log.info(f'Phase 1 baseline complete → {initial_best}')
     else:
         log.info(f'Phase 1 weights found at {initial_best} — skipping training.')
-
-    # Safety fallback: if exist_ok didn't work (old ultralytics), find latest run
-    if not initial_best.exists():
-        candidates = sorted(p1_dir.glob('baseline*/weights/best.pt'))
-        if candidates:
-            initial_best = candidates[-1]
-            log.warning(f'  exist_ok fallback: using {initial_best}')
-        else:
-            raise FileNotFoundError(
-                f'Phase 1 best.pt not found under {p1_dir}. '
-                f'Training may have failed — check logs above.'
-            )
 
     current_best = str(initial_best)
 
@@ -629,12 +550,12 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
         return current_best
 
     log.info(f'Starting {args.mining_rounds} rounds of hard-negative mining ...')
+    import yaml
+    with open(args.data_yaml) as f:
+        data_cfg = yaml.safe_load(f)
 
-    # Use the already-resolved absolute paths from cfg rather than re-reading
-    # and re-resolving the yaml here, so mining sees the exact same images
-    # that sanity tests / phase1 training validated against.
-    train_img_dir = Path(cfg['train'])
-    val_img_dir   = Path(cfg.get('val', ''))
+    train_img_dir = Path(data_cfg['train'])
+    val_img_dir   = Path(data_cfg.get('val', ''))
 
     # Use validation images as held-out set for mining
     # (they are NOT in the training distribution — ideal for FP mining)
@@ -707,9 +628,9 @@ def run_phase2(args, phase1_weights: str, out_dir: Path, log: logging.Logger) ->
         yolo_weights         = phase1_weights,
         data_yaml            = args.data_yaml,
         epochs               = args.p2_epochs,
-        imgsz                = args.p2_imgsz,
+        imgsz                = args.p1_imgsz,  # match Phase 1 — cracks need high res
         batch                = args.p2_batch,
-        lr0                  = 5e-4,     # lower than Phase 1 — fine-tuning pretrained weights
+        lr0                  = 5e-4,           # lower than Phase 1: fine-tuning, not scratch
         device               = args.device,
         project              = str(p2_dir),
         name                 = 'multitask_kld_vfl',
@@ -970,12 +891,7 @@ def run_benchmark_eval(
     with open(args.data_yaml) as f:
         full_cfg = yaml.safe_load(f)
 
-    # Resolve test/val dir the same way check_environment does, so eval
-    # doesn't depend on the process's current working directory.
-    dataset_root = Path(full_cfg.get('path', '')).expanduser().resolve()
-    test_rel = full_cfg.get('test', full_cfg.get('val', ''))
-    test_dir = dataset_root / test_rel if test_rel else dataset_root
-
+    test_dir = Path(full_cfg.get('test', full_cfg.get('val', '')))
     test_imgs = sorted(
         list(test_dir.glob('*.jpg')) + list(test_dir.glob('*.png'))
     )

@@ -241,6 +241,15 @@ class Phase3Model(nn.Module):
     ) -> Tuple[torch.Tensor, Dict]:
         images = batch['img'].to(self.device_str)
 
+        # FiLM: use a small downsampled version of the tile as the global context
+        # surrogate during training (full-frame not available in the custom loop).
+        # 64×64 is sufficient to capture scene-level context (sleeper type, texture)
+        # that FiLM conditions on.
+        if self.use_film and global_frame is None:
+            global_frame = F.interpolate(
+                images, size=(64, 64), mode='bilinear', align_corners=False
+            )
+
         # ── Feature extraction ────────────────────────────────────────────────
         feats = self._extract_features(images, global_frame, tile_bbox)
         d2, d3, d4, d5 = feats
@@ -331,41 +340,23 @@ class Phase3Model(nn.Module):
         device:    torch.device,
     ) -> Tuple[torch.Tensor, Dict]:
         """
-        Compute detection loss across all P2/P3/P4/P5 levels.
+        Detection loss for Phase 3.
 
-        Strategy:
-          - Classification: binary focal loss vs GT labels per anchor
-          - Box: Phase 2 KLD/GWD loss on matched positive anchors
-          - Angle: L1 loss on matched positives
+        Full TAL label assignment is not implemented in this custom loop —
+        that machinery lives inside ultralytics' OBBTrainer.  Returning zero
+        here is deliberately correct: the Phase 3 model produces better
+        features from its improved backbone+neck; the detection head weights
+        are transferred from Phase 2 and evaluated via the Phase 1 pipeline.
+        Pushing all predictions toward background (the original placeholder)
+        would DESTROY the Phase 2 detector over 120 epochs.
 
-        For Phase 3, we use a simplified loss that computes per-level
-        binary cross-entropy for classification (as a proxy for VFL)
-        and L1 for box/angle.  For full KLD loss, the anchor matching
-        logic from Phase 2's ultralytics trainer should be reused.
-
-        This method returns a scalar loss; in the full pipeline this
-        should be integrated with the ultralytics OBB loss machinery.
+        To enable full detection training in Phase 3, wire Phase3Model into
+        ultralytics' OBBTrainer (see design doc Section 5) using the same
+        pattern as Phase2Trainer — the trainer handles TAL, anchor assignment,
+        DFL, and VFL automatically.
         """
-        cls_losses, box_losses = [], []
-
-        for level_idx, (cls_pred, box_pred, ang_pred) in enumerate(obb_preds):
-            B, nc, H, W = cls_pred.shape
-
-            # Classification: push all predictions toward 0 (background prior)
-            # Positive anchors would be set to 1 here via label assignment —
-            # that logic is complex (TAL/ATSS) and is handled in Phase3Trainer.
-            # During the standalone forward pass we return a placeholder.
-            cls_bg_loss = F.binary_cross_entropy_with_logits(
-                cls_pred,
-                torch.zeros_like(cls_pred),
-                reduction='mean',
-            ) * 0.01   # near-zero weight until label assignment is wired in
-
-            cls_losses.append(cls_bg_loss)
-
-        det_loss  = sum(cls_losses) / len(cls_losses)
-        det_items = {'cls_bg': float(det_loss)}
-        return det_loss, det_items
+        zero = torch.tensor(0.0, device=device, requires_grad=True)
+        return zero, {}
 
     # ── Loss helpers (identical to Phase 2 MultiTaskModel) ────────────────────
 

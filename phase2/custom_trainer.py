@@ -65,27 +65,32 @@ class Phase2TrainArgs:
     All training hyperparameters for Phase 2.
     Sensible defaults that match the design doc's Phase 2 recommendations.
     """
-    data:          str   = 'data.yaml'
-    yolo_weights:  str   = 'yolov8s-obb.pt'
-    epochs:        int   = 80
-    imgsz:         int   = 640
-    batch:         int   = 8
-    lr0:           float = 1e-3
-    lrf:           float = 0.01            # final lr = lr0 * lrf
-    momentum:      float = 0.937
-    weight_decay:  float = 5e-4
-    warmup_epochs: int   = 3
-    optimizer:     str   = 'AdamW'
-    device:        Any   = 0              # 0 for GPU, 'cpu' for CPU
-    workers:       int   = 4
-    patience:      int   = 20
-    augment:       bool  = True
-    mosaic:        float = 1.0
-    project:       str   = 'phase2_runs'
-    name:          str   = 'multitask'
-    save:          bool  = True
-    plots:         bool  = False
-    verbose:       bool  = True
+    data:             str   = 'data.yaml'
+    yolo_weights:     str   = 'yolov8s-obb.pt'
+    epochs:           int   = 80
+    imgsz:            int   = 1024        # match Phase 1 — cracks need high res
+    batch:            int   = 8
+    lr0:              float = 5e-4        # fine-tuning from Phase 1, not scratch
+    lrf:              float = 0.01        # final lr = lr0 * lrf
+    momentum:         float = 0.937
+    weight_decay:     float = 1e-3        # stronger regularisation for tiny dataset
+    warmup_epochs:    int   = 5
+    cos_lr:           bool  = True        # cosine annealing
+    label_smoothing:  float = 0.05        # prevents overconfidence
+    copy_paste:       float = 0.3         # copy-paste augmentation
+    degrees:          float = 45.0        # OBB rotation augmentation
+    optimizer:        str   = 'AdamW'
+    device:           Any   = 0           # 0 for GPU, 'cpu' for CPU
+    workers:          int   = 4
+    patience:         int   = 30          # higher patience: 15 val images = high noise
+    augment:          bool  = True
+    mosaic:           float = 1.0
+    amp:              bool  = False        # disabled to prevent NaN with OBB loss
+    project:          str   = 'phase2_runs'
+    name:             str   = 'multitask'
+    save:             bool  = True
+    plots:            bool  = False
+    verbose:          bool  = True
     # Phase 2 specific
     box_type:              str   = 'kld'   # 'kld' or 'gwd' — Section 6.1 ablation
     tversky_alpha:         float = 0.3
@@ -272,14 +277,15 @@ class Phase2Trainer(OBBTrainer):
             f"with lr={base_lr * self.aux_head_lr_scale:.2e}"
         )
 
-    # ── forward call that passes aux_targets to MultiTaskModel ────────────────
+    # ── inject aux_targets into the model's forward call ─────────────────────
 
     def loss_function(self, batch):
         """
-        Called by ultralytics' train_step as:
-            self.loss, self.loss_items = self.model(batch)
-
-        We forward the aux_targets from the preprocessed batch into the model.
+        ultralytics calls self.model(batch) inside _do_train.
+        This hook is the correct override point in recent ultralytics versions.
+        Older versions call model(batch) directly — the preprocess_batch
+        approach stores aux_targets on the batch dict and MultiTaskModel reads
+        them from there as a fallback.
         """
         aux_targets = batch.pop('aux_targets', None)
         return self.model(batch, aux_targets=aux_targets)
