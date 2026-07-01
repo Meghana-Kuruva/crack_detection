@@ -379,12 +379,15 @@ def run_phase3_training(
             epoch_loss += loss.item()
             global_step += 1
 
-            # LR warmup for first 3 epochs
+            # LR warmup for first 3 epochs (linear from 0.1× to 1×)
+            # FIX: use 'initial_lr' (set by PyTorch scheduler) or fall back to
+            # the param group's configured 'lr' before any scaling was applied.
             if epoch < 3:
                 lr_scale = min(1.0, (epoch * len(train_loader) + batch_idx + 1) /
                                (3 * len(train_loader)))
                 for pg in optim.param_groups:
-                    pg['lr'] = pg.get('_base_lr', args.lr0) * lr_scale
+                    base = pg.get('initial_lr', pg.get('lr', args.lr0))
+                    pg['lr'] = base * max(lr_scale, 0.1)
 
         sched.step()
         epoch_loss /= max(len(train_loader), 1)

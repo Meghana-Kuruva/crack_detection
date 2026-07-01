@@ -136,12 +136,16 @@ def parse_args():
                    help='DataLoader worker processes')
 
     # ── Phase 1 hyperparameters ───────────────────────────────────────────────
-    p.add_argument('--p1-epochs', type=int, default=100,
+    p.add_argument('--p1-epochs', type=int, default=150,
                    help='Phase 1 initial training epochs')
-    p.add_argument('--p1-batch', type=int, default=16,
+    p.add_argument('--p1-batch', type=int, default=8,
                    help='Phase 1 training batch size')
     p.add_argument('--p1-imgsz', type=int, default=1024,
                    help='Phase 1 training image size')
+    p.add_argument('--p1-lr0', type=float, default=0.001,
+                   help='Phase 1 initial learning rate')
+    p.add_argument('--p1-no-amp', action='store_true',
+                   help='Disable AMP for Phase 1 (fixes EMA NaN on small OBB datasets)')
     p.add_argument('--mining-rounds', type=int, default=3,
                    help='Phase 1 hard-negative mining rounds')
     p.add_argument('--mining-epochs', type=int, default=50,
@@ -244,8 +248,20 @@ def check_environment(args, log: logging.Logger):
     import yaml
     with open(args.data_yaml) as f:
         cfg = yaml.safe_load(f)
-    nc    = cfg.get('nc', '?')
     names = cfg.get('names', {})
+    nc    = cfg.get('nc', None)
+
+    # Auto-patch missing nc field — Roboflow OBB exports sometimes omit it,
+    # which causes CUDA index-out-of-bounds during loss computation.
+    if nc is None:
+        nc = len(names)
+        cfg['nc'] = nc
+        with open(args.data_yaml, 'w') as f:
+            yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+        log.info(f'  Auto-patched data.yaml: added nc={nc}')
+    else:
+        nc = int(nc)
+
     train = cfg.get('train', '')
     val   = cfg.get('val', '')
     log.info(f'  Dataset: nc={nc}, classes={list(names.values())}')
@@ -494,30 +510,65 @@ def run_phase1(args, cfg, out_dir: Path, log: logging.Logger) -> str:
 
     # ── Step 1: Initial training ─────────────────────────────────────────────
     weights = args.phase1_weights
-    initial_best = p1_dir / 'weights' / 'best.pt'
+    lr0     = getattr(args, 'p1_lr0',    0.001)
+    use_amp = not getattr(args, 'p1_no_amp', False)
+
+    # FIX: scan for any existing baseline run instead of hardcoding 'baseline/'
+    # Ultralytics auto-increments (baseline, baseline2, baseline3…) when
+    # exist_ok=False. We now pass exist_ok=True to pin to 'baseline/' always.
+    initial_best = p1_dir / 'baseline' / 'weights' / 'best.pt'
 
     if not initial_best.exists():
         log.info(f'Training Phase 1 baseline from {weights} ...')
+        log.info(f'  lr0 = {lr0}  amp = {use_amp}')
+        if not use_amp:
+            log.info('  AMP disabled — trades some speed for numerical stability '
+                     '(recommended for small/rotated-box datasets prone to NaN loss).')
+
         model = YOLO(weights)
         model.train(
-            data      = args.data_yaml,
-            epochs    = args.p1_epochs,
-            imgsz     = args.p1_imgsz,
-            batch     = args.p1_batch,
-            device    = args.device,
-            optimizer = 'AdamW',
-            augment   = True,
-            mosaic    = 1.0,
-            patience  = 20,
-            project   = str(p1_dir),
-            name      = 'baseline',
-            save      = True,
-            task      = 'obb',
+            data             = args.data_yaml,
+            epochs           = args.p1_epochs,
+            imgsz            = args.p1_imgsz,
+            batch            = args.p1_batch,
+            device           = args.device,
+            optimizer        = 'AdamW',
+            lr0              = lr0,
+            lrf              = 0.01,
+            warmup_epochs    = 5,
+            warmup_bias_lr   = 0.01,     # FIX: default 0.1 causes EMA NaN on small datasets
+            weight_decay     = 0.0005,
+            momentum         = 0.937,
+            augment          = True,
+            mosaic           = 1.0,
+            copy_paste       = 0.3,      # paste real cracks onto clean sleeper backgrounds
+            degrees          = 15.0,     # OBB-safe rotation augmentation
+            mixup            = 0.1,
+            close_mosaic     = 15,       # disable mosaic in final 15 epochs for clean convergence
+            patience         = 50,       # FIX: was 20 — EMA NaN was preventing "improvement"
+            amp              = use_amp,
+            exist_ok         = True,     # FIX: pins to 'baseline/' and prevents baseline-2/3/…
+            project          = str(p1_dir),
+            name             = 'baseline',
+            save             = True,
+            task             = 'obb',
+            workers          = args.workers,
         )
-        initial_best = p1_dir / 'baseline' / 'weights' / 'best.pt'
         log.info(f'Phase 1 baseline complete → {initial_best}')
     else:
         log.info(f'Phase 1 weights found at {initial_best} — skipping training.')
+
+    # Safety fallback: if exist_ok didn't work (old ultralytics), find latest run
+    if not initial_best.exists():
+        candidates = sorted(p1_dir.glob('baseline*/weights/best.pt'))
+        if candidates:
+            initial_best = candidates[-1]
+            log.warning(f'  exist_ok fallback: using {initial_best}')
+        else:
+            raise FileNotFoundError(
+                f'Phase 1 best.pt not found under {p1_dir}. '
+                f'Training may have failed — check logs above.'
+            )
 
     current_best = str(initial_best)
 
@@ -607,7 +658,7 @@ def run_phase2(args, phase1_weights: str, out_dir: Path, log: logging.Logger) ->
         epochs               = args.p2_epochs,
         imgsz                = args.p2_imgsz,
         batch                = args.p2_batch,
-        lr0                  = 1e-3,
+        lr0                  = 5e-4,     # lower than Phase 1 — fine-tuning pretrained weights
         device               = args.device,
         project              = str(p2_dir),
         name                 = 'multitask_kld_vfl',
